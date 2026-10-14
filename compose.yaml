@@ -1,0 +1,19 @@
+services:
+  database:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: keriskit
+      POSTGRES_USER: keriskit
+      POSTGRES_PASSWORD: ${KERISKIT_DB_PASSWORD:?Set KERISKIT_DB_PASSWORD first}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - keriskit_database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keriskit -d keriskit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  keriskit_database:
