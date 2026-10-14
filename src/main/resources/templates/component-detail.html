@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ms" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${component.name} + ' | KerisKit'">
+        Komponen | KerisKit
+    </title>
+</head>
+<body>
+<main>
+    <p>KerisKit — Pembelajaran Warisan</p>
+
+    <h1 th:text="${component.name}">Nama komponen</h1>
+
+    <p th:text="${component.description}">
+        Penerangan komponen
+    </p>
+</main>
+</body>
+</html>
