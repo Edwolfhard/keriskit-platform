@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10110f">
+    <meta name="description"
+          content="Discover KerisKit, an interactive modular heritage learning kit exploring the keris of the Malay Peninsula.">
+    <title>KerisKit | Heritage in Your Hands</title>
+
+    <style>
+        :root {
+            color-scheme: dark;
+            --background: #10110f;
+            --surface: #191b17;
+            --text: #f4f0e7;
+            --muted: #b9b8ad;
+            --gold: #dec18a;
+            --border: #35382e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.65;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        a:focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 6px;
+        }
+
+        .container {
+            width: min(1120px, 90%);
+            margin-inline: auto;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav {
+            min-height: 84px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .brand {
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-decoration: none;
+        }
+
+        .brand span {
+            color: var(--gold);
+        }
+
+        .nav-link {
+            color: var(--muted);
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .nav-link:hover {
+            color: var(--gold);
+        }
+
+        .hero {
+            padding: 110px 0 90px;
+            background:
+                    radial-gradient(
+                            ellipse at 85% 20%,
+                            rgba(222, 193, 138, 0.09),
+                            transparent 55%
+                    );
+        }
+
+        .eyebrow {
+            margin: 0 0 24px;
+            color: var(--gold);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        h1, h2, h3, p {
+            margin-top: 0;
+        }
+
+        h1 {
+            max-width: 850px;
+            margin-bottom: 28px;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(52px, 8vw, 100px);
+            font-weight: 400;
+            letter-spacing: -3px;
+            line-height: 1.05;
+        }
+
+        h1 em {
+            color: var(--gold);
+            font-weight: 400;
+        }
+
+        .intro {
+            max-width: 570px;
+            margin-bottom: 34px;
+            color: var(--muted);
+            font-size: 18px;
+        }
+
+        .button {
+            display: inline-flex;
+            min-height: 50px;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: 1px solid var(--gold);
+            border-radius: 4px;
+            background: var(--gold);
+            color: var(--background);
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 160ms ease;
+        }
+
+        .button:hover {
+            background: #ecd5aa;
+        }
+
+        .hero-note {
+            margin-top: 48px;
+            padding-top: 22px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .section {
+            padding: 75px 0;
+            border-top: 1px solid var(--border);
+            scroll-margin-top: 24px;
+        }
+
+        .section-heading {
+            max-width: 650px;
+            margin-bottom: 38px;
+        }
+
+        h2 {
+            margin-bottom: 18px;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 400;
+            line-height: 1.2;
+        }
+
+        .section-heading p,
+        .card p {
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .card {
+            padding: 30px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+        }
+
+        .number {
+            display: block;
+            margin-bottom: 28px;
+            color: var(--gold);
+            font-size: 13px;
+            letter-spacing: 2px;
+        }
+
+        h3 {
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .card p {
+            margin-bottom: 0;
+            font-size: 15px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 35px;
+            padding: 38px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+        }
+
+        .feature p {
+            max-width: 580px;
+            margin-bottom: 0;
+            color: var(--muted);
+        }
+
+        .feature .button {
+            flex-shrink: 0;
+        }
+
+        footer {
+            padding: 30px 0;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .footer-content p {
+            margin: 0;
+        }
+
+        @media (max-width: 700px) {
+            nav {
+                min-height: 72px;
+            }
+
+            .hero {
+                padding: 75px 0 60px;
+            }
+
+            h1 {
+                letter-spacing: -2px;
+            }
+
+            .intro {
+                font-size: 16px;
+            }
+
+            .section {
+                padding: 52px 0;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 28px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            .button {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <nav class="container" aria-label="Main navigation">
+        <a class="brand" href="/" aria-label="KerisKit home">
+            Keris<span>Kit.</span>
+        </a>
+
+        <a class="nav-link" href="#about">Discover the kit ↗</a>
+    </nav>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="container">
+            <p class="eyebrow">Explore · Assemble · Discover</p>
+
+            <h1>Heritage,<br>in <em>your hands.</em></h1>
+
+            <p class="intro">
+                Meet KerisKit, an interactive modular heritage learning kit.
+                Explore the keris of the Malay Peninsula through its
+                components, craftsmanship, and stories.
+            </p>
+
+            <a class="button" href="#explore">
+                Start exploring ↗
+            </a>
+
+            <p class="hero-note">
+                A hands-on introduction to the keris of the Malay Peninsula.
+            </p>
+        </div>
+    </section>
+
+    <section class="section" id="about">
+        <div class="container">
+            <div class="section-heading">
+                <p class="eyebrow">The KerisKit experience</p>
+                <h2>Discover the whole.<br>Understand each part.</h2>
+                <p>
+                    Connect hands-on exploration with digital learning.
+                    Get to know the components and the heritage behind them,
+                    one step at a time.
+                </p>
+            </div>
+
+            <div class="grid">
+                <article class="card">
+                    <span class="number">01 / EXPLORE</span>
+                    <h3>Look closer</h3>
+                    <p>
+                        Begin with individual components and discover
+                        the details that make up a keris.
+                    </p>
+                </article>
+
+                <article class="card">
+                    <span class="number">02 / ASSEMBLE</span>
+                    <h3>Learn through the kit</h3>
+                    <p>
+                        Use the modular kit to explore how the parts
+                        relate to the complete form.
+                    </p>
+                </article>
+
+                <article class="card">
+                    <span class="number">03 / DISCOVER</span>
+                    <h3>Continue the story</h3>
+                    <p>
+                        Follow the digital learning materials to explore
+                        the keris beyond its appearance.
+                    </p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="explore">
+        <div class="container">
+            <div class="section-heading">
+                <p class="eyebrow">Begin your journey</p>
+                <h2>One component at a time.</h2>
+                <p>
+                    Start with the hulu and explore the available
+                    component page.
+                </p>
+            </div>
+
+            <article class="feature">
+                <div>
+                    <h3>Hulu · The Hilt</h3>
+                    <p>
+                        Open the Hulu page to begin exploring
+                        the components of a keris.
+                    </p>
+                </div>
+
+                <a class="button" href="/components/hulu">
+                    Explore Hulu ↗
+                </a>
+            </article>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="container footer-content">
+        <p>KerisKit — Heritage in Your Hands.</p>
+        <p>Explore the keris of the Malay Peninsula.</p>
+    </div>
+</footer>
+</body>
+</html>
