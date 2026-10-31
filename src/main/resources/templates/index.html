@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#10110f">
+    <meta name="theme-color" content="#080808">
     <meta name="description"
-          content="Discover KerisKit, an interactive modular heritage learning kit exploring the keris of the Malay Peninsula.">
+          content="Explore KerisKit, an interactive modular heritage learning kit exploring the keris of the Malay Peninsula.">
+
     <title>KerisKit | Heritage in Your Hands</title>
 
     <style>
         :root {
             color-scheme: dark;
-            --background: #10110f;
-            --surface: #191b17;
+            --background: #080808;
             --text: #f4f0e7;
-            --muted: #b9b8ad;
+            --muted: #ccc9c0;
             --gold: #dec18a;
-            --border: #35382e;
+            --border: rgba(222, 193, 138, 0.18);
         }
 
         * {
@@ -29,10 +29,20 @@
 
         body {
             margin: 0;
-            background: var(--background);
+            background:
+                    radial-gradient(
+                            ellipse at 15% 65%,
+                            rgba(174, 132, 65, 0.12),
+                            transparent 45%
+                    ),
+                    var(--background);
             color: var(--text);
             font-family: Arial, Helvetica, sans-serif;
             line-height: 1.65;
+        }
+
+        [hidden] {
+            display: none !important;
         }
 
         a {
@@ -40,8 +50,12 @@
         }
 
         a:focus-visible {
-            outline: 3px solid var(--gold);
+            outline: 2px solid var(--gold);
             outline-offset: 6px;
+        }
+
+        h1, h2, h3, p {
+            margin-top: 0;
         }
 
         .container {
@@ -49,16 +63,62 @@
             margin-inline: auto;
         }
 
-        header {
-            border-bottom: 1px solid var(--border);
+        .eyebrow {
+            margin-bottom: 16px;
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
         }
 
-        nav {
-            min-height: 84px;
+        /* Glass surfaces: opaque fallback */
+        .glass {
+            border: 1px solid var(--border);
+            background:
+                    linear-gradient(
+                            135deg,
+                            rgba(255, 255, 255, 0.07),
+                            transparent 65%
+                    ),
+                    rgba(22, 22, 20, 0.94);
+            box-shadow:
+                    0 18px 48px rgba(0, 0, 0, 0.22),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        @supports ((backdrop-filter: blur(16px)) or
+                   (-webkit-backdrop-filter: blur(16px))) {
+            .glass {
+                background:
+                        linear-gradient(
+                                135deg,
+                                rgba(255, 255, 255, 0.075),
+                                rgba(255, 255, 255, 0.015)
+                        ),
+                        rgba(22, 22, 20, 0.68);
+                -webkit-backdrop-filter: blur(16px);
+                backdrop-filter: blur(16px);
+            }
+        }
+
+        /* Navigation */
+        .site-header {
+            position: absolute;
+            top: 16px;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .navigation {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 24px;
+            gap: 20px;
+            min-height: 64px;
+            padding: 0 24px;
+            border-radius: 18px;
         }
 
         .brand {
@@ -73,8 +133,11 @@
         }
 
         .nav-link {
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
             color: var(--muted);
-            font-size: 14px;
+            font-size: 13px;
             text-decoration: none;
         }
 
@@ -82,132 +145,214 @@
             color: var(--gold);
         }
 
-        .hero {
-            padding: 110px 0 90px;
+        /* Opening scene */
+        .box-story {
+            position: relative;
+        }
+
+        .box-story.is-animated {
+            height: 320vh;
+            height: 320svh;
+        }
+
+        .box-stage {
+            position: relative;
+            height: 100vh;
+            height: 100svh;
+            min-height: 540px;
+            overflow: hidden;
+            isolation: isolate;
             background:
                     radial-gradient(
-                            ellipse at 85% 20%,
-                            rgba(222, 193, 138, 0.09),
-                            transparent 55%
+                            ellipse at 50% 58%,
+                            rgba(184, 143, 77, 0.15),
+                            transparent 65%
+                    ),
+                    var(--background);
+        }
+
+        .is-animated .box-stage {
+            position: sticky;
+            top: 0;
+        }
+
+        .box-caption {
+            position: absolute;
+            top: 110px;
+            left: 5%;
+            right: 5%;
+            z-index: 2;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .box-caption h1 {
+            margin-bottom: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(34px, 4.5vw, 66px);
+            font-weight: 400;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+        }
+
+        .box-caption em,
+        .box-reveal em {
+            color: var(--gold);
+            font-weight: 400;
+        }
+
+        .box-visual {
+            position: absolute;
+            inset: 265px 0 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .box-image {
+            display: block;
+            width: min(92vw, 1200px);
+            height: 100%;
+            min-height: 0;
+            object-fit: contain;
+            transform-origin: center;
+        }
+
+        .is-animated .box-image {
+            will-change: transform, opacity;
+        }
+
+        .box-scroll-hint {
+            position: absolute;
+            bottom: 24px;
+            left: 20px;
+            right: 20px;
+            z-index: 2;
+            margin: 0;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-align: center;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        .box-scroll-hint span {
+            display: block;
+            margin-top: 4px;
+            color: var(--gold);
+            font-size: 22px;
+        }
+
+        .box-reveal {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            display: grid;
+            align-content: center;
+            justify-items: center;
+            padding: 24px;
+            text-align: center;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .box-reveal h2 {
+            max-width: 850px;
+            margin-bottom: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(40px, 7vw, 96px);
+            font-weight: 400;
+            line-height: 1.1;
+            letter-spacing: -2px;
+        }
+
+        .image-error {
+            position: absolute;
+            inset: 265px 5% 75px;
+            display: grid;
+            align-content: center;
+            justify-items: center;
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: #171715;
+            text-align: center;
+            overflow: auto;
+        }
+
+        .image-error p {
+            color: var(--muted);
+        }
+
+        /* Content */
+        .section {
+            position: relative;
+            padding: 100px 0;
+            border-top: 1px solid var(--border);
+            scroll-margin-top: 30px;
+        }
+
+        #explore {
+            background:
+                    radial-gradient(
+                            ellipse at 85% 50%,
+                            rgba(174, 132, 65, 0.12),
+                            transparent 65%
                     );
         }
 
-        .eyebrow {
-            margin: 0 0 24px;
-            color: var(--gold);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-
-        h1, h2, h3, p {
-            margin-top: 0;
-        }
-
-        h1 {
-            max-width: 850px;
-            margin-bottom: 28px;
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: clamp(52px, 8vw, 100px);
-            font-weight: 400;
-            letter-spacing: -3px;
-            line-height: 1.05;
-        }
-
-        h1 em {
-            color: var(--gold);
-            font-weight: 400;
-        }
-
-        .intro {
-            max-width: 570px;
-            margin-bottom: 34px;
-            color: var(--muted);
-            font-size: 18px;
-        }
-
-        .button {
-            display: inline-flex;
-            min-height: 50px;
-            align-items: center;
-            justify-content: center;
-            padding: 12px 24px;
-            border: 1px solid var(--gold);
-            border-radius: 4px;
-            background: var(--gold);
-            color: var(--background);
-            font-size: 14px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: background 160ms ease;
-        }
-
-        .button:hover {
-            background: #ecd5aa;
-        }
-
-        .hero-note {
-            margin-top: 48px;
-            padding-top: 22px;
-            border-top: 1px solid var(--border);
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .section {
-            padding: 75px 0;
-            border-top: 1px solid var(--border);
-            scroll-margin-top: 24px;
-        }
-
         .section-heading {
-            max-width: 650px;
-            margin-bottom: 38px;
+            max-width: 720px;
+            margin-bottom: 42px;
         }
 
-        h2 {
-            margin-bottom: 18px;
+        .section h2 {
+            margin-bottom: 24px;
             font-family: Georgia, "Times New Roman", serif;
-            font-size: clamp(32px, 5vw, 48px);
+            font-size: clamp(36px, 5vw, 64px);
             font-weight: 400;
-            line-height: 1.2;
+            line-height: 1.15;
+            letter-spacing: -1px;
         }
 
-        .section-heading p,
-        .card p {
+        .section-heading > p:not(.eyebrow) {
+            max-width: 600px;
             color: var(--muted);
+            font-size: 17px;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
         }
 
         .card {
             padding: 30px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--surface);
+            border-radius: 22px;
         }
 
         .number {
             display: block;
-            margin-bottom: 28px;
+            margin-bottom: 30px;
             color: var(--gold);
-            font-size: 13px;
+            font-size: 11px;
             letter-spacing: 2px;
         }
 
-        h3 {
+        .card h3,
+        .feature h3 {
             margin-bottom: 12px;
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 21px;
+            font-weight: 500;
         }
 
-        .card p {
+        .card p,
+        .feature p {
             margin-bottom: 0;
+            color: var(--muted);
             font-size: 15px;
         }
 
@@ -215,28 +360,41 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 35px;
+            gap: 30px;
             padding: 38px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--surface);
+            border-radius: 22px;
         }
 
         .feature p {
             max-width: 580px;
-            margin-bottom: 0;
-            color: var(--muted);
         }
 
-        .feature .button {
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+            padding: 12px 24px;
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ecd5aa, #c9a76c);
+            color: #10110f;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
             flex-shrink: 0;
+            box-shadow: 0 6px 20px rgba(185, 143, 76, 0.14);
+        }
+
+        .button:hover {
+            background: #ecd5aa;
         }
 
         footer {
             padding: 30px 0;
             border-top: 1px solid var(--border);
             color: var(--muted);
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .footer-content {
@@ -246,37 +404,70 @@
         }
 
         .footer-content p {
-            margin: 0;
+            margin-bottom: 0;
         }
 
         @media (max-width: 700px) {
-            nav {
-                min-height: 72px;
+            .site-header {
+                top: 12px;
             }
 
-            .hero {
-                padding: 75px 0 60px;
+            .navigation {
+                min-height: 60px;
+                padding-inline: 18px;
+                border-radius: 16px;
             }
 
-            h1 {
-                letter-spacing: -2px;
+            .brand {
+                font-size: 23px;
             }
 
-            .intro {
-                font-size: 16px;
+            .nav-link {
+                font-size: 11px;
+            }
+
+            .box-caption {
+                top: 115px;
+            }
+
+            .box-caption h1 {
+                font-size: clamp(34px, 8vw, 52px);
+                letter-spacing: -1px;
+            }
+
+            .box-visual {
+                inset: 250px 0 90px;
+            }
+
+            .box-image {
+                width: 96vw;
+            }
+
+            .eyebrow {
+                font-size: 9px;
+                letter-spacing: 2px;
+            }
+
+            .box-reveal h2 {
+                letter-spacing: -1px;
             }
 
             .section {
-                padding: 52px 0;
+                padding: 65px 0;
             }
 
             .grid {
                 grid-template-columns: 1fr;
             }
 
+            .card,
             .feature {
-                align-items: flex-start;
+                border-radius: 18px;
+            }
+
+            .feature {
                 flex-direction: column;
+                align-items: flex-start;
                 padding: 28px;
             }
 
@@ -285,49 +476,82 @@
             }
         }
 
+        @media (max-height: 600px) and (min-width: 701px) {
+            .box-caption {
+                top: 95px;
+            }
+
+            .box-caption h1 {
+                font-size: 36px;
+            }
+
+            .box-visual,
+            .image-error {
+                top: 205px;
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             html {
                 scroll-behavior: auto;
-            }
-
-            .button {
-                transition: none;
             }
         }
     </style>
 </head>
 
 <body>
-<header>
-    <nav class="container" aria-label="Main navigation">
-        <a class="brand" href="/" aria-label="KerisKit home">
+<header class="site-header">
+    <nav class="container navigation glass" aria-label="Main navigation">
+        <a class="brand" href="/" th:href="@{/}"
+           aria-label="KerisKit home">
             Keris<span>Kit.</span>
         </a>
-
         <a class="nav-link" href="#about">Discover the kit ↗</a>
     </nav>
 </header>
 
 <main>
-    <section class="hero">
-        <div class="container">
-            <p class="eyebrow">Explore · Assemble · Discover</p>
+    <section class="box-story" id="box-story"
+             aria-label="Discover the KerisKit learning kit">
+        <div class="box-stage" id="box-stage">
 
-            <h1>Heritage,<br>in <em>your hands.</em></h1>
+            <div class="box-caption" id="box-caption">
+                <p class="eyebrow">Explore · Assemble · Discover</p>
+                <h1>A legacy.<br>Inside <em>a box.</em></h1>
+            </div>
 
-            <p class="intro">
-                Meet KerisKit, an interactive modular heritage learning kit.
-                Explore the keris of the Malay Peninsula through its
-                components, craftsmanship, and stories.
+            <div class="box-visual">
+                <img
+                        class="box-image"
+                        id="box-image"
+                        src="/images/keriskit-box.png?v=2"
+                        th:src="@{/images/keriskit-box.png(v=2)}"
+                        alt="An open KerisKit presentation box displaying individual keris components"
+                        fetchpriority="high"
+                        decoding="async"
+                >
+            </div>
+
+            <div class="image-error" id="image-error"
+                 role="status" hidden>
+                <h3>The image could not be loaded.</h3>
+                <p>
+                    <a href="/images/keriskit-box.png"
+                       th:href="@{/images/keriskit-box.png}">
+                        Open image directly ↗
+                    </a>
+                </p>
+            </div>
+
+            <p class="box-scroll-hint" id="box-scroll-hint" hidden>
+                Scroll to discover
+                <span aria-hidden="true">↓</span>
             </p>
 
-            <a class="button" href="#explore">
-                Start exploring ↗
-            </a>
-
-            <p class="hero-note">
-                A hands-on introduction to the keris of the Malay Peninsula.
-            </p>
+            <div class="box-reveal" id="box-reveal">
+                <p class="eyebrow">The story begins within</p>
+                <h2>Every component<br>holds <em>a story.</em></h2>
+            </div>
         </div>
     </section>
 
@@ -335,16 +559,17 @@
         <div class="container">
             <div class="section-heading">
                 <p class="eyebrow">The KerisKit experience</p>
-                <h2>Discover the whole.<br>Understand each part.</h2>
+                <h2>Heritage,<br>in your hands.</h2>
                 <p>
-                    Connect hands-on exploration with digital learning.
-                    Get to know the components and the heritage behind them,
-                    one step at a time.
+                    Meet KerisKit, an interactive modular heritage
+                    learning kit. Explore the keris of the Malay
+                    Peninsula through its components, craftsmanship,
+                    and stories.
                 </p>
             </div>
 
             <div class="grid">
-                <article class="card">
+                <article class="card glass">
                     <span class="number">01 / EXPLORE</span>
                     <h3>Look closer</h3>
                     <p>
@@ -353,7 +578,7 @@
                     </p>
                 </article>
 
-                <article class="card">
+                <article class="card glass">
                     <span class="number">02 / ASSEMBLE</span>
                     <h3>Learn through the kit</h3>
                     <p>
@@ -362,12 +587,12 @@
                     </p>
                 </article>
 
-                <article class="card">
+                <article class="card glass">
                     <span class="number">03 / DISCOVER</span>
                     <h3>Continue the story</h3>
                     <p>
-                        Follow the digital learning materials to explore
-                        the keris beyond its appearance.
+                        Follow the digital learning materials to
+                        explore the keris beyond its appearance.
                     </p>
                 </article>
             </div>
@@ -378,14 +603,14 @@
         <div class="container">
             <div class="section-heading">
                 <p class="eyebrow">Begin your journey</p>
-                <h2>One component at a time.</h2>
+                <h2>One component<br>at a time.</h2>
                 <p>
                     Start with the hulu and explore the available
                     component page.
                 </p>
             </div>
 
-            <article class="feature">
+            <article class="feature glass">
                 <div>
                     <h3>Hulu · The Hilt</h3>
                     <p>
@@ -394,7 +619,9 @@
                     </p>
                 </div>
 
-                <a class="button" href="/components/hulu">
+                <a class="button"
+                   href="/components/hulu"
+                   th:href="@{/components/hulu}">
                     Explore Hulu ↗
                 </a>
             </article>
@@ -408,5 +635,134 @@
         <p>Explore the keris of the Malay Peninsula.</p>
     </div>
 </footer>
+
+<script>
+    (() => {
+        "use strict";
+
+        const section = document.getElementById("box-story");
+        const stage = document.getElementById("box-stage");
+        const image = document.getElementById("box-image");
+        const caption = document.getElementById("box-caption");
+        const hint = document.getElementById("box-scroll-hint");
+        const reveal = document.getElementById("box-reveal");
+        const error = document.getElementById("image-error");
+
+        if (!section || !stage || !image || !caption ||
+            !hint || !reveal || !error) {
+            return;
+        }
+
+        const reducedMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)"
+        );
+
+        let imageReady = false;
+        let scheduled = false;
+
+        const clamp = value => Math.max(0, Math.min(1, value));
+
+        function smoothstep(value) {
+            const t = clamp(value);
+            return t * t * (3 - 2 * t);
+        }
+
+        function resetScene() {
+            image.style.transform = "none";
+            image.style.opacity = "1";
+            caption.style.opacity = "1";
+            hint.style.opacity = "1";
+            reveal.style.opacity = "0";
+            reveal.style.visibility = "hidden";
+            reveal.style.transform = "none";
+        }
+
+        function updateMode() {
+            const animated = imageReady && !reducedMotion.matches;
+
+            section.classList.toggle("is-animated", animated);
+            hint.hidden = !animated;
+
+            if (!animated) {
+                resetScene();
+            }
+
+            scheduleRender();
+        }
+
+        function render() {
+            scheduled = false;
+
+            if (!section.classList.contains("is-animated")) {
+                return;
+            }
+
+            const bounds = section.getBoundingClientRect();
+            const distance = section.offsetHeight - stage.offsetHeight;
+            const progress = clamp(
+                -bounds.top / Math.max(1, distance)
+            );
+
+            const zoom = smoothstep((progress - 0.06) / 0.72);
+            const scale = 1 + zoom * 1.4;
+            const titleFade = smoothstep(progress / 0.22);
+            const imageFade = smoothstep((progress - 0.58) / 0.26);
+            const textReveal = smoothstep((progress - 0.76) / 0.20);
+
+            image.style.transform = `scale(${scale})`;
+            image.style.opacity = String(1 - imageFade);
+            caption.style.opacity = String(1 - titleFade);
+            hint.style.opacity = String(1 - titleFade);
+
+            reveal.style.opacity = String(textReveal);
+            reveal.style.visibility =
+                textReveal > 0 ? "visible" : "hidden";
+            reveal.style.transform =
+                `translateY(${24 * (1 - textReveal)}px)`;
+        }
+
+        function scheduleRender() {
+            if (scheduled) return;
+
+            scheduled = true;
+            window.requestAnimationFrame(render);
+        }
+
+        function handleImageLoad() {
+            imageReady = true;
+            image.hidden = false;
+            error.hidden = true;
+            updateMode();
+        }
+
+        function handleImageError() {
+            imageReady = false;
+            image.hidden = true;
+            error.hidden = false;
+            updateMode();
+        }
+
+        image.addEventListener("load", handleImageLoad);
+        image.addEventListener("error", handleImageError);
+
+        window.addEventListener("scroll", scheduleRender, {
+            passive: true
+        });
+
+        window.addEventListener("resize", scheduleRender);
+        window.addEventListener("pageshow", scheduleRender);
+        reducedMotion.addEventListener("change", updateMode);
+
+        if (image.complete) {
+            if (image.naturalWidth > 0) {
+                handleImageLoad();
+            } else {
+                handleImageError();
+            }
+        } else {
+            updateMode();
+        }
+    })();
+</script>
 </body>
 </html>
