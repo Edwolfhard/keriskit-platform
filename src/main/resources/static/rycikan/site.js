@@ -239,7 +239,7 @@
 
             const timeout = window.setTimeout(() => {
                 controller.abort();
-            }, 60000);
+            }, 200000);
 
             try {
                 const response = await fetch("/api/chatbot/chat", {

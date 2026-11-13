@@ -2,10 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b0c0b">
 
     <title th:text="${component.name} + ' | RYCIKĀN'">
@@ -35,6 +32,40 @@
             margin-top: 24px;
         }
 
+        .component-guide {
+            overflow-wrap: anywhere;
+        }
+
+        .component-guide-intro {
+            color: var(--text);
+            font-size: 1.08rem;
+            line-height: 1.85;
+        }
+
+        .component-guide-section {
+            margin-top: 30px;
+            padding-top: 28px;
+            border-top: 1px solid var(--border);
+        }
+
+        .component-guide-section h3 {
+            margin-bottom: 14px;
+            color: var(--gold);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.5rem;
+            font-weight: 400;
+            line-height: 1.3;
+        }
+
+        .component-guide-section p {
+            margin-bottom: 16px;
+            line-height: 1.85;
+        }
+
+        .component-guide-section p:last-child {
+            margin-bottom: 0;
+        }
+
         .component-footer-brand {
             text-decoration: none;
         }
@@ -42,6 +73,77 @@
         .component-footer-tagline {
             margin: 10px 0 0;
             font-size: 0.85rem;
+        }
+
+        .component-viewer {
+            padding: 24px;
+        }
+
+        .rotation-stage {
+            width: 100%;
+            max-width: 384px;
+            margin-inline: auto;
+            overflow: hidden;
+            border-radius: 14px;
+            background: transparent;
+            cursor: grab;
+            touch-action: pan-y;
+            user-select: none;
+        }
+
+        .rotation-stage.is-dragging {
+            cursor: grabbing;
+        }
+
+        .rotation-stage:focus-visible {
+            outline: 2px solid var(--gold);
+            outline-offset: 5px;
+        }
+
+        .rotation-canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .rotation-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .rotation-controls button {
+            display: inline-grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: transparent;
+            color: var(--gold);
+            font-size: 1.3rem;
+        }
+
+        .rotation-controls button:hover {
+            background: rgba(222, 193, 138, 0.08);
+        }
+
+        .rotation-controls button:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        .rotation-angle {
+            min-width: 60px;
+            color: var(--gold);
+            text-align: center;
+        }
+
+        .component-viewer .art-note {
+            margin-top: 16px;
+            line-height: 1.7;
         }
     </style>
 
@@ -60,14 +162,17 @@
             .chat-dependent {
                 display: none !important;
             }
+
+            .rotation-controls,
+            .rotation-stage {
+                display: none;
+            }
         </style>
     </noscript>
 </head>
 
 <body>
-<a class="skip" href="#main-content">
-    Skip to main content
-</a>
+<a class="skip" href="#main-content">Skip to main content</a>
 
 <header class="site-header">
     <nav class="wrap nav" aria-label="Main navigation">
@@ -82,7 +187,6 @@
 
             <span>
                 <span class="wordmark">RYCIKĀN</span>
-
                 <span class="strap">
                     The Malay Keris Assembly Experience
                 </span>
@@ -95,23 +199,14 @@
                 aria-label="Open navigation menu"
                 aria-expanded="false"
                 aria-controls="navlinks">
-
-            <svg class="icon"
-                 viewBox="0 0 24 24"
-                 aria-hidden="true">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4 6h16M4 12h16M4 18h16"></path>
             </svg>
         </button>
 
         <div class="navlinks" id="navlinks">
-            <a href="/" th:href="@{/}">
-                Home
-            </a>
-
-            <a href="/about.html"
-               th:href="@{/about.html}">
-                About Us
-            </a>
+            <a href="/" th:href="@{/}">Home</a>
+            <a href="/about.html" th:href="@{/about.html}">About Us</a>
 
             <a href="/about.html#get-in-touch"
                th:href="@{/about.html} + '#get-in-touch'">
@@ -128,51 +223,83 @@
     </nav>
 </header>
 
-<main id="main-content" tabindex="-1">
+<main id="main-content"
+      tabindex="-1"
+      th:with="
+        isHulu=${#strings.equalsIgnoreCase(#strings.trim(component.name), 'Hulu')},
+        isPendokok=${#strings.equalsIgnoreCase(#strings.trim(component.name), 'Pendokok')},
+        isSampir=${#strings.equalsIgnoreCase(#strings.trim(component.name), 'Sampir')},
+        isSarung=${#strings.equalsIgnoreCase(#strings.trim(component.name), 'Sarung')},
+        isBilah=${#strings.equalsIgnoreCase(#strings.trim(component.name), 'Bilah')},
+        isKasut=${#strings.containsIgnoreCase(component.name, 'kasut') or #strings.containsIgnoreCase(component.name, 'buntut')},
+        hasViewer=${isHulu or isPendokok or isSampir or isSarung or isBilah or isKasut},
+        viewerImage=${isHulu ? '/images/hulu-360.png?v=5' : (isPendokok ? '/images/pendokok-360.png?v=1' : (isSampir ? '/images/sampir-360.png?v=1' : (isSarung ? '/images/sarung-360.png?v=1' : (isBilah ? '/images/bilah-360.png?v=1' : '/images/kasut-360.png?v=1'))))}">
+
     <div class="wrap">
         <nav class="crumb" aria-label="Breadcrumb">
-            <a href="/" th:href="@{/}">
-                Home
-            </a>
-
+            <a href="/" th:href="@{/}">Home</a>
             <span aria-hidden="true"> / </span>
 
-            <a href="/explore.html"
-               th:href="@{/explore.html}">
+            <a href="/explore.html" th:href="@{/explore.html}">
                 Explore KerisKit
             </a>
 
             <span aria-hidden="true"> / </span>
-
-            <span aria-current="page"
-                  th:text="${component.name}">
+            <span aria-current="page" th:text="${component.name}">
                 Component
             </span>
         </nav>
     </div>
 
-    <section class="hero"
-             aria-labelledby="component-title">
-
+    <section class="hero" aria-labelledby="component-title">
         <div class="wrap split">
             <div>
-                <p class="eyebrow">
-                    KerisKit · Component Guide
-                </p>
+                <p class="eyebrow">KerisKit · Component Guide</p>
 
-                <h1 id="component-title"
-                    th:text="${component.name}">
+                <h1 id="component-title" th:text="${component.name}">
                     Component
                 </h1>
 
-                <p class="lead">
+                <p class="lead" th:if="${isHulu}">
+                    Discover the keris hilt through its form,
+                    materials, and the craft of carving.
+                </p>
+
+                <p class="lead" th:if="${isPendokok}">
+                    Explore the metal collar where the hilt meets
+                    the blade, and discover the detail within
+                    its form and ornament.
+                </p>
+
+                <p class="lead" th:if="${isSampir}">
+                    Discover the upper sheath through its sweeping
+                    profile, careful fit, and connections with
+                    regional craft and maritime interpretation.
+                </p>
+
+                <p class="lead" th:if="${isSarung}">
+                    Explore the complete sheath: a protective housing
+                    for the blade and a composition of form,
+                    wood grain, and craftsmanship.
+                </p>
+
+                <p class="lead" th:if="${isBilah}">
+                    Explore the blade through its profile, named features,
+                    and the craftsmanship behind its formation.
+                </p>
+
+                <p class="lead" th:if="${isKasut}">
+                    Discover the finishing piece at the base of the sheath,
+                    where construction, proportion, and regional style meet.
+                </p>
+
+                <p class="lead" th:unless="${hasViewer}">
                     Explore this part of the keris and
                     consider its place within the complete form.
                 </p>
 
                 <div class="actions">
-                    <a class="btn"
-                       href="#component-overview">
+                    <a class="btn" href="#component-overview">
                         Read the Guide
                         <span aria-hidden="true">↓</span>
                     </a>
@@ -185,7 +312,66 @@
                 </div>
             </div>
 
-            <figure class="hero-art glass">
+            <figure class="hero-art glass component-viewer"
+                    data-rotation-viewer
+                    th:if="${hasViewer}"
+                    th:attr="
+                        data-name=${component.name},
+                        data-image=${viewerImage},
+                        data-crop=${isHulu ? '0.875' : '1'}">
+
+                <div class="rotation-stage"
+                     tabindex="0"
+                     role="group"
+                     th:attr="aria-label=${component.name} + ' rotation viewer'"
+                     aria-describedby="rotation-hint">
+
+                    <canvas class="rotation-canvas"
+                            width="384"
+                            height="448"
+                            role="img"
+                            th:attr="aria-label=${component.name} + ' viewed at 0 degrees'">
+                        Your browser does not support this viewer.
+                    </canvas>
+                </div>
+
+                <div class="rotation-controls">
+                    <button type="button"
+                            data-rotate="-1"
+                            aria-label="Rotate to the previous angle"
+                            disabled>
+                        <span aria-hidden="true">←</span>
+                    </button>
+
+                    <output class="rotation-angle"
+                            aria-live="polite">0°</output>
+
+                    <button type="button"
+                            data-rotate="1"
+                            aria-label="Rotate to the next angle"
+                            disabled>
+                        <span aria-hidden="true">→</span>
+                    </button>
+                </div>
+
+                <figcaption class="art-note" id="rotation-hint">
+                    <span class="rotation-status" role="status">
+                        Loading component views…
+                    </span>
+                    <br>
+                    Eight illustrated angles · 45° steps
+                </figcaption>
+
+                <noscript>
+                    <p class="small">
+                        Enable JavaScript to use the rotation viewer.
+                    </p>
+                    <img th:src="${viewerImage}"
+                         th:alt="${component.name} + ' shown from eight angles'">
+                </noscript>
+            </figure>
+
+            <figure class="hero-art glass" th:unless="${hasViewer}">
                 <img src="/images/keriskit-box.png?v=2"
                      th:src="@{/images/keriskit-box.png(v=2)}"
                      alt="KerisKit concept display showing the individual keris components"
@@ -202,50 +388,825 @@
     <section class="section"
              id="component-overview"
              aria-labelledby="overview-title">
-
         <div class="wrap">
             <article class="glass card component-overview">
-                <p class="eyebrow">
-                    A closer look
-                </p>
+                <p class="eyebrow">A closer look</p>
 
                 <h2 id="overview-title">
                     Understanding
-                    <em th:text="${component.name}">
-                        this component
-                    </em>
+                    <em th:text="${component.name}">this component</em>
                 </h2>
 
-                <p class="component-description"
-                   th:if="${!#strings.isEmpty(component.description)}"
-                   th:text="${component.description}">
-                    Component description
-                </p>
+                <!-- HULU -->
+                <div class="component-guide" th:if="${isHulu}">
+                    <p class="component-guide-intro">
+                        The hulu is the hilt of the keris: the part held in the hand.
+                        Its form brings together practical function and artistic expression.
+                        Shaped to accommodate a grip, it also offers a surface through
+                        which a carver explores proportion, ornament, and the character
+                        of the material.
+                    </p>
 
-                <p th:if="${#strings.isEmpty(component.description)}">
-                    A detailed guide for this component
-                    is being prepared.
-                </p>
+                    <section class="component-guide-section"
+                             aria-labelledby="hulu-function-title">
+                        <h3 id="hulu-function-title">Designed for the Hand</h3>
+                        <p>
+                            The hulu was shaped to serve as the handle of a weapon.
+                            Its design therefore responds to the grasp of the hand,
+                            giving its curves and proportions a practical purpose
+                            alongside their visual appeal.
+                        </p>
+                        <p>
+                            When examining a hilt, begin with its overall outline.
+                            Follow the transition between the upper section, the grip,
+                            and the base. Consider how these parts work together as
+                            a form intended to be held.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="hulu-history-title">
+                        <h3 id="hulu-history-title">Form and Cultural Change</h3>
+                        <p>
+                            Keris hilt design reflects changing cultural and religious
+                            influences. Earlier forms described in Malay craft literature
+                            include representations associated with Hindu figures and
+                            Garuda. The arrival of Islam is described as influencing
+                            the adaptation of hilt designs into other forms.
+                        </p>
+                        <p>
+                            The resulting variety includes designs associated with birds
+                            and other familiar shapes. Rather than following a single
+                            outline, hilt carving developed through different interpretations
+                            of form. These traditions provide context for understanding the
+                            hulu without establishing the precise origin or type of the
+                            example displayed here.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="hulu-materials-title">
+                        <h3 id="hulu-materials-title">Materials and the Beauty of Wood</h3>
+                        <p>
+                            Historical examples of keris hilts were made from a range of
+                            materials, including wood, horn, ivory, and metals. Each material
+                            offered a different appearance and possibilities for shaping
+                            and decoration.
+                        </p>
+                        <p>
+                            For wooden hilts, the natural grain is an important part of
+                            their aesthetic character. Craftspersons selected wood with
+                            attention to the beauty and suitability of its grain. Kemuning
+                            is among the woods recorded in traditional hilt making, and
+                            the preparation of dry wood is also emphasised.
+                        </p>
+                        <p>
+                            On a finished wooden hilt, smooth areas allow the grain to
+                            remain visible, while carved sections introduce additional
+                            patterns and texture. The wood species of the displayed
+                            example has not been verified.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="hulu-ornament-title">
+                        <h3 id="hulu-ornament-title">Ornament and Artistic Expression</h3>
+                        <p>
+                            Hilt ornament draws on nature and animal forms. Documented
+                            decorative approaches include awan larat, raised floral
+                            ornament, sculptural work, and turned decoration. These
+                            belong to a wider vocabulary of hilt design; every hilt
+                            does not carry the same motifs or techniques.
+                        </p>
+                        <p>
+                            Decoration also interacts with the shape beneath it. A carved
+                            band may draw attention around the grip, while a smooth surface
+                            makes a change in curvature more visible. Looking at both
+                            together helps reveal how the hilt is composed as a complete
+                            object.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="hulu-craft-title">
+                        <h3 id="hulu-craft-title">From Material to Finished Hilt</h3>
+                        <p>
+                            Carving involves several stages, from shaping the material
+                            to defining the ornament and refining its surface.
+                            Traditional tools include saws, chisels, and carving knives,
+                            each supporting different parts of the process.
+                        </p>
+                        <p>
+                            Surface finishing receives particular attention. The craft
+                            guide records the use of natural smoothing materials,
+                            including prepared leaves and stingray skin. These details
+                            show that a finished hilt depends on careful preparation
+                            and refinement as well as the carving itself.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="hulu-observation-title">
+                        <h3 id="hulu-observation-title">Details to Observe</h3>
+                        <p>
+                            Study the silhouette before focusing on the smaller details.
+                            Follow the curve from the upper section towards the base,
+                            then examine the carved bands and their spacing. Notice
+                            where ornament meets a smooth surface and how the wood
+                            grain appears beneath the finish.
+                        </p>
+                        <p>
+                            These observations connect the hilt's practical form with its
+                            visual character. Together, its outline, material, and surface
+                            treatment offer a closer view of the craft behind the hulu.
+                        </p>
+                    </section>
+                </div>
+
+                <!-- PENDOKOK -->
+                <div class="component-guide" th:if="${isPendokok}">
+                    <p class="component-guide-intro">
+                        The pendokok is the metal collar positioned between the lower
+                        end of the hulu and the ganja at the base of the blade.
+                        Although small in comparison with the surrounding parts,
+                        it contributes a distinctive element to the appearance
+                        of the assembled keris.
+                    </p>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="pendokok-function-title">
+                        <h3 id="pendokok-function-title">At the Junction of Hilt and Blade</h3>
+                        <p>
+                            The pendokok sits around the junction where the blade's
+                            tang, known as the puting, enters the hilt. Its position
+                            connects it visually with both the hulu above and
+                            the blade below.
+                        </p>
+                        <p>
+                            Related fittings are described using terms such as cincin,
+                            kili-kili, and mendak. Terminology varies between traditions,
+                            so these names should be understood within the context
+                            in which they are used.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="pendokok-materials-title">
+                        <h3 id="pendokok-materials-title">Materials and Metalwork</h3>
+                        <p>
+                            Pendokok are described in a range of metals, including gold,
+                            silver, suasa, bronze, and copper. The chosen material,
+                            together with its finish and ornament, contributes to
+                            the character of the fitting.
+                        </p>
+                        <p>
+                            Decorative work may involve surface carving, pierced
+                            ornament, or casting. These approaches create different
+                            relationships between raised details, recessed areas,
+                            and open spaces.
+                        </p>
+                        <p>
+                            The displayed illustration has a silver-coloured surface
+                            with dark recesses. Its appearance alone does not establish
+                            the metal composition or the technique used to make an
+                            equivalent physical object.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="pendokok-motifs-title">
+                        <h3 id="pendokok-motifs-title">Nature in Miniature</h3>
+                        <p>
+                            The decorative vocabulary associated with pendokok includes
+                            ketam guri, lotus flowers, clove flowers, ferns, and curling
+                            bean tendrils. Such motifs belong to a wider interest in
+                            plant forms within Malay decorative arts.
+                        </p>
+                        <p>
+                            The supplied account draws comparisons with ornament on
+                            wooden architecture, keris hilts and sheaths, batik, and
+                            songket. These connections offer a way to consider the
+                            pendokok as part of a broader artistic tradition.
+                        </p>
+                        <p>
+                            In this illustration, observe the floral relief, curling
+                            lines, and bead-like borders. The specific traditional
+                            names of the illustrated flowers have not been established.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="pendokok-regional-title">
+                        <h3 id="pendokok-regional-title">Shape and Regional Traditions</h3>
+                        <p>
+                            Pendokok occur in different profiles and decorative
+                            arrangements. The supplied account names forms including
+                            tajung, Bugis Patani, pacat kenyang, teratai, and telur ikan.
+                        </p>
+                        <p>
+                            It also associates variations with Bugis, Palembang, and
+                            Minang traditions, and distinguishes examples connected
+                            with Sulawesi, Terengganu, and Kelantan–Pattani. These
+                            associations provide context for comparison rather than
+                            a definitive identification of the example shown here.
+                        </p>
+                        <p>
+                            A feature such as an elongated neck may prompt a question
+                            about regional style. Establishing origin requires
+                            supporting information about the object, rather than
+                            relying on one visible feature alone.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="pendokok-identity-title">
+                        <h3 id="pendokok-identity-title">Personal Taste and Presentation</h3>
+                        <p>
+                            When a keris is sheathed, the pendokok can remain visible
+                            alongside the hilt and the upper sheath. Its metal surface
+                            introduces a different visual quality beside the
+                            surrounding wood.
+                        </p>
+                        <p>
+                            The selection of form, material, and ornament can express
+                            the owner's taste and contribute to the presentation of
+                            the whole keris. Connections with social standing depend
+                            on cultural and historical context; an elaborate fitting
+                            alone does not establish an owner's rank.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="pendokok-observation-title">
+                        <h3 id="pendokok-observation-title">Details to Observe</h3>
+                        <p>
+                            Rotate the illustrated views and begin with the overall
+                            profile. Compare the broad upper rim with the narrower
+                            base, then examine the central opening.
+                        </p>
+                        <p>
+                            Follow the arrangement of flowers, curling ornament,
+                            and border details. Notice how the bright raised surfaces
+                            contrast with darker recesses, giving definition to
+                            decoration on a small object.
+                        </p>
+                    </section>
+                </div>
+
+                <!-- SAMPIR -->
+                <div class="component-guide" th:if="${isSampir}">
+                    <p class="component-guide-intro">
+                        The sampir is the broad, transverse upper part of the keris
+                        sheath. Positioned above the batang serunai, it gives the
+                        sheath its distinctive upper silhouette. It is also
+                        described as the perahu keris, a name that recalls
+                        the outline of a boat.
+                    </p>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sampir-position-title">
+                        <h3 id="sampir-position-title">The Upper Part of the Sheath</h3>
+                        <p>
+                            The sampir and batang serunai form adjoining parts of the
+                            sheath, but they are distinct components. Their colour
+                            and grain may create a continuous appearance even when
+                            different pieces of wood have been used.
+                        </p>
+                        <p>
+                            The sampir accommodates the broader area at the base of
+                            the blade, including the ganja, while the batang serunai
+                            extends below it around the length of the blade. This
+                            relationship explains the contrast between the broad
+                            upper form and the elongated lower section.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sampir-fit-title">
+                        <h3 id="sampir-fit-title">Fit and Protection</h3>
+                        <p>
+                            The internal shape of the sampir is important to the fit
+                            of the sheathed keris. Its cavity must correspond with
+                            the blade it receives, helping to protect the broader
+                            basal area from unwanted contact.
+                        </p>
+                        <p>
+                            In the supplied article, Angah Sunan describes this close
+                            fit as a form of “lock”. This is best understood here
+                            as an account of careful fitting, rather than evidence
+                            that every keris contains an identical mechanical locking
+                            device. The quality of the fit depends on the individual
+                            blade and sheath.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sampir-wood-title">
+                        <h3 id="sampir-wood-title">Wood and Craftsmanship</h3>
+                        <p>
+                            The article describes the selection of harder wood for
+                            the sampir and comparatively softer wood for the batang
+                            serunai. This is a description of the practice discussed
+                            by the author, rather than a rule for every sheath.
+                        </p>
+                        <p>
+                            Among the woods named for sampir making are kemuning,
+                            saga, ciku, and acacia. Selection brings together practical
+                            suitability and visual character: the grain, colour,
+                            and finish all contribute to the appearance of
+                            the completed piece.
+                        </p>
+                        <p>
+                            The wood species of the illustrated example has not
+                            been verified. Its visible grain can be explored as a
+                            design feature without assigning it a particular species.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sampir-forms-title">
+                        <h3 id="sampir-forms-title">Forms and Regional Traditions</h3>
+                        <p>
+                            Sampir profiles vary across keris traditions. The article
+                            identifies forms including tebeng, sehari bulan or bulan
+                            sabit, and tajung Patani. It also discusses Javanese forms
+                            such as gayaman and ladrang as points of comparison.
+                        </p>
+                        <p>
+                            Within the Malay Peninsula, the sampir can be considered
+                            alongside the hilt, blade, and other fittings when exploring
+                            regional style. A profile can offer clues, but a single
+                            component does not establish the origin of an entire
+                            keris or the ancestry of its owner.
+                        </p>
+                        <p>
+                            Inherited objects, gifts, and changes to fittings can
+                            bring together elements from different traditions. The
+                            illustrated sampir is therefore presented as a component
+                            study rather than a confirmed regional type.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sampir-maritime-title">
+                        <h3 id="sampir-maritime-title">The Boat and Maritime Identity</h3>
+                        <p>
+                            In “Rahsia Sampir Keris: Kod Maritim” (2018), Angah Sunan
+                            interprets the boat-like sampir as an expression of
+                            connections between Malay culture and the sea. The
+                            reading links its outline with voyaging and the
+                            maritime setting of the wider archipelago.
+                        </p>
+                        <p>
+                            This is a symbolic interpretation of the form, rather
+                            than a proven account of why every sampir was originally
+                            designed. It offers a cultural perspective alongside
+                            the component’s practical role as part of the sheath.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sampir-observe-title">
+                        <h3 id="sampir-observe-title">Details to Observe</h3>
+                        <p>
+                            Rotate the illustrated views and compare the broad faces
+                            with the narrow side profiles. Follow the sweep of the
+                            upper edge, the raised ends, and the transition towards
+                            the lower connector.
+                        </p>
+                        <p>
+                            Notice how the wood grain follows or crosses the curves,
+                            and how reflected light reveals the thickness of the
+                            piece. Consider how the broad sampir would meet the
+                            longer, narrower batang serunai in the assembled sheath.
+                        </p>
+                    </section>
+                </div>
+
+                <!-- SARUNG -->
+                <div class="component-guide" th:if="${isSarung}">
+                    <p class="component-guide-intro">
+                        The sarung is the sheath that houses the blade of the keris
+                        when it is not in use. Its protective purpose is expressed
+                        through a carefully shaped exterior, while its wood,
+                        proportions, and decoration contribute to the appearance
+                        of the complete keris.
+                    </p>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sarung-function-title">
+                        <h3 id="sarung-function-title">A Protective Housing for the Blade</h3>
+                        <p>
+                            The sarung encloses the blade, helping to protect it from
+                            unwanted contact and physical damage. The supplied craft
+                            infographic presents this protection as the sheath's
+                            principal function when the keris is not being used.
+                        </p>
+                        <p>
+                            Its external form should therefore be considered together
+                            with the blade it contains. The sheath is part of the
+                            keris assembly, and its shape must accommodate the form
+                            of the blade rather than being chosen for appearance alone.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sarung-parts-title">
+                        <h3 id="sarung-parts-title">Understanding the Complete Sheath</h3>
+                        <p>
+                            This viewer presents the sarung as a complete assembly:
+                            the broad sampir at the top, the elongated batang serunai
+                            below it, and the terminal piece at the lower end, referred
+                            to in this guide as the kasut or buntut.
+                        </p>
+                        <p>
+                            The sampir forms the wider upper portion, while the batang
+                            serunai continues around the length of the blade. The
+                            lower terminal completes the outline of the illustrated
+                            sheath. Looking at these sections together makes their
+                            proportions and relationships easier to understand.
+                        </p>
+                        <p>
+                            Naming and construction details can vary between
+                            traditions. The separate component guides allow each
+                            part to be examined more closely, while this page
+                            explains their relationship within the whole sarung.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sarung-materials-title">
+                        <h3 id="sarung-materials-title">Wood, Grain, and Visual Character</h3>
+                        <p>
+                            The supplied infographic identifies wood as the material
+                            used for the sarung and names kemuning and bacang hutan
+                            among the woods associated with its making. These examples
+                            describe materials used in the craft, rather than identifying
+                            the species shown in this illustration.
+                        </p>
+                        <p>
+                            Wood grain is an important feature to observe. Variations
+                            in colour and pattern can distinguish adjoining sections,
+                            even when their finished surfaces form a visually unified
+                            sheath. In this illustration, the broad upper part and
+                            the long lower section display contrasting grain patterns.
+                        </p>
+                        <p>
+                            The species and construction of a physical sheath cannot
+                            be established from this illustration alone. The viewer
+                            is intended to support observation of its visible form.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sarung-design-title">
+                        <h3 id="sarung-design-title">Designed as Part of the Keris</h3>
+                        <p>
+                            The infographic explains that sheath design is considered
+                            in relation to the blade, hilt, and type of keris. This
+                            relationship brings practical fit and visual composition
+                            into the same process.
+                        </p>
+                        <p>
+                            A broad upper section, a long lower body, and a shaped
+                            terminal create different visual roles within one object.
+                            Their proportions can be studied alongside the hilt and
+                            other fittings to understand the appearance of the
+                            assembled keris.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sarung-decoration-title">
+                        <h3 id="sarung-decoration-title">Ornament and Regional Variety</h3>
+                        <p>
+                            Sheath forms and decorative treatments vary across keris
+                            traditions. The supplied infographic draws attention to
+                            differences in carving and motifs between Javanese and
+                            Peninsula examples.
+                        </p>
+                        <p>
+                            Such comparisons provide a starting point for examining
+                            individual objects, rather than a fixed rule for every
+                            sheath. A plain surface can reveal the character of the
+                            wood, while an ornamented surface places greater emphasis
+                            on carved detail. The illustrated example mainly
+                            highlights its profile, grain, and polished appearance.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="sarung-observe-title">
+                        <h3 id="sarung-observe-title">Details to Observe</h3>
+                        <p>
+                            Rotate the illustrated views and follow the outline from
+                            the raised ends of the sampir down to the lower terminal.
+                            Compare the width of the upper section with the length
+                            and thickness of the batang serunai.
+                        </p>
+                        <p>
+                            Notice the joins between sections, the changes in grain,
+                            and the ringed profile at the bottom. The narrow side
+                            views reveal thickness that is less apparent when
+                            looking at the broad faces.
+                        </p>
+                        <p>
+                            Finally, consider the sarung as a whole: how do its
+                            separate sections form a continuous protective housing
+                            and a coherent visual composition?
+                        </p>
+                    </section>
+                </div>
+
+                <!-- BILAH -->
+                <div class="component-guide" th:if="${isBilah}">
+                    <p class="component-guide-intro">
+                        The bilah is the blade of the keris. Its profile,
+                        surface, and named features offer a way to understand
+                        both the structure of the weapon and the craft involved
+                        in its making. The illustrated example presents a
+                        straight blade with a broad, asymmetric base tapering
+                        towards a pointed tip.
+                    </p>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="bilah-form-title">
+                        <h3 id="bilah-form-title">Straight and Wavy Forms</h3>
+                        <p>
+                            Keris blades occur in straight and wavy forms.
+                            <cite>Keris Melayu Semenanjung</cite> describes
+                            changes in blade form over time, alongside the
+                            development of different regional traditions.
+                            A straight blade is therefore part of the variety
+                            of keris forms, rather than an incomplete version
+                            of a wavy blade.
+                        </p>
+                        <p>
+                            Begin by following the outline from the broad base
+                            towards the tip. In this illustration, the blade
+                            narrows along a largely straight profile. Compare
+                            its broad faces with the narrow side views to
+                            distinguish width from thickness.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="bilah-base-title">
+                        <h3 id="bilah-base-title">The Base and Its Connection to the Hilt</h3>
+                        <p>
+                            The puting is the tang that extends from the base
+                            of the blade into the hilt. It is visible in this
+                            component study because the hilt has been removed
+                            from the illustration.
+                        </p>
+                        <p>
+                            The book identifies the basal element as ganjar,
+                            also called aring. Its blade diagrams also name
+                            features around the base, including belalai gajah,
+                            janggut, and kerawang. These terms describe details
+                            found in the examples discussed; they should not
+                            all be assigned to the comparatively simple base
+                            of the illustrated blade.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="bilah-surface-title">
+                        <h3 id="bilah-surface-title">Reading the Surface</h3>
+                        <p>
+                            The anatomical diagrams identify features such as
+                            pamor, alur, lurah, and tulang. These names help
+                            direct attention to differences in surface
+                            pattern and the contours of a blade.
+                        </p>
+                        <p>
+                            Their presence and visibility vary between examples.
+                            Dark colour or a mottled surface alone should not
+                            be treated as confirmation of a particular pamor
+                            pattern. The photograph and generated views do not
+                            establish this blade's metal composition, age,
+                            or exact manufacturing process.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="bilah-tip-title">
+                        <h3 id="bilah-tip-title">Towards the Hujung Tuntung</h3>
+                        <p>
+                            The book calls the terminal point of the blade
+                            the hujung tuntung and explains its importance
+                            in the keris's historical role as a weapon.
+                            It is a distinct feature to consider when
+                            examining the blade's overall proportions.
+                        </p>
+                        <p>
+                            Observe how the sides converge towards the point
+                            and how the profile changes near the end.
+                            The illustration supports visual study of this
+                            shape; it does not indicate the sharpness or
+                            condition of the physical blade.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="bilah-craft-title">
+                        <h3 id="bilah-craft-title">The Craft Behind the Blade</h3>
+                        <p>
+                            The book distinguishes several roles in keris
+                            production. An empu may undertake work from
+                            forging the iron through to completing the
+                            hilt and sheath. A pandai besi may specialise
+                            in producing and finishing the blade before
+                            passing it to makers of the other fittings.
+                        </p>
+                        <p>
+                            A tukang bekalan is described as preparing and
+                            forging the metal into a preliminary blade form
+                            for another craftsperson to refine. This division
+                            of work shows that the complete keris can bring
+                            together several specialised skills.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="bilah-observe-title">
+                        <h3 id="bilah-observe-title">Details to Observe</h3>
+                        <p>
+                            Rotate the illustrated views and compare the
+                            asymmetric base, the tapering body, and the tip.
+                            Notice the exposed tang and consider where it
+                            would enter the hilt in the assembled keris.
+                        </p>
+                        <p>
+                            These eight views are an AI-assisted interpretation
+                            of a single reference photograph. The unseen
+                            surfaces are reconstructed estimates, so the
+                            viewer is a learning illustration rather than
+                            an exact record of the physical blade.
+                        </p>
+                    </section>
+                </div>
+
+                <!-- KASUT / BUNTUT -->
+                <div class="component-guide" th:if="${isKasut}">
+                    <p class="component-guide-intro">
+                        The kasut, also called the buntut, is the terminal
+                        part at the lower end of the keris sheath. It
+                        completes the outline of the sarung and forms
+                        the finishing point of the batang serunai.
+                        Its shape and construction are considered in
+                        relation to the rest of the sheath.
+                    </p>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="kasut-position-title">
+                        <h3 id="kasut-position-title">Completing the Sheath</h3>
+                        <p>
+                            <cite>Keris Melayu Semenanjung</cite> places
+                            the kasut at the furthest end of the sarung.
+                            It is fitted to the lower end of the batang
+                            serunai, completing the appearance of the sheath.
+                        </p>
+                        <p>
+                            The upper wooden section visible in this
+                            illustration shows the adjoining end of the
+                            batang serunai. The lower, stepped section
+                            allows the transition to the terminal piece
+                            to be examined more closely.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="kasut-construction-title">
+                        <h3 id="kasut-construction-title">Separate and Integral Construction</h3>
+                        <p>
+                            A kasut may be made as a separate fitting,
+                            but this is not the only method described
+                            in the book. On keris Tajung examples, the
+                            terminal can be formed as part of the
+                            batang serunai itself.
+                        </p>
+                        <p>
+                            For separately fitted examples, the book
+                            describes a projecting section or tenon
+                            inserted into the batang serunai to make
+                            the connection more secure. It also records
+                            examples attached at the end using adhesive.
+                        </p>
+                        <p>
+                            The internal attachment is not visible in
+                            this illustration. A line between the
+                            sections does not establish which fitting
+                            method was used.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="kasut-materials-title">
+                        <h3 id="kasut-materials-title">A Visual Relationship with the Sampir</h3>
+                        <p>
+                            The book explains that the kasut is commonly
+                            made from the same material as the sampir.
+                            This choice helps the upper and lower ends
+                            of the sheath appear coordinated.
+                        </p>
+                        <p>
+                            Colour, grain, and finish can therefore be
+                            considered across the whole sarung rather
+                            than in isolation. The illustrated example
+                            has a polished wooden appearance, but its
+                            wood species has not been verified.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="kasut-forms-title">
+                        <h3 id="kasut-forms-title">Different Profiles and Forms</h3>
+                        <p>
+                            The examples in the book include thin,
+                            rounded, and stepped terminals. It also
+                            identifies forms called buntut lipas and
+                            buntut belalang, illustrating differences
+                            in their outline and proportions.
+                        </p>
+                        <p>
+                            Bugis examples are described as generally
+                            thicker and larger, with some having stepped
+                            profiles. The book also records adaptations
+                            of Bugis terminals on Peninsula Bugis keris.
+                        </p>
+                        <p>
+                            These comparisons provide context for the
+                            range of forms. The stepped profile in
+                            this illustration alone does not confirm
+                            a particular regional origin.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="kasut-relationship-title">
+                        <h3 id="kasut-relationship-title">Choosing a Form for the Whole</h3>
+                        <p>
+                            The shape of the kasut is also related to
+                            the type of sampir. The book associates
+                            some thin terminals with sampir tebeng,
+                            while illustrating other forms with
+                            sampir sehari bulan or bulan sabit.
+                        </p>
+                        <p>
+                            It also records variation within these
+                            pairings. The relationship is useful for
+                            comparison, but it should not be treated
+                            as a rigid rule covering every sheath.
+                        </p>
+                    </section>
+
+                    <section class="component-guide-section"
+                             aria-labelledby="kasut-observe-title">
+                        <h3 id="kasut-observe-title">Details to Observe</h3>
+                        <p>
+                            Rotate the illustrated views and follow
+                            the stepped bands around the lower edge.
+                            Compare the broad face with the narrower
+                            side profile, then examine the visible
+                            underside.
+                        </p>
+                        <p>
+                            Notice the transition from the batang
+                            serunai to the terminal, the changes in
+                            wood grain, and the rounded edges of the
+                            steps. Consider how these small details
+                            complete the silhouette of the whole sarung.
+                        </p>
+                    </section>
+                </div>
+
+                <!-- Other components -->
+                <div th:unless="${hasViewer}">
+                    <p class="component-description"
+                       th:if="${!#strings.isEmpty(component.description)}"
+                       th:text="${component.description}">
+                        Component description
+                    </p>
+
+                    <p th:if="${#strings.isEmpty(component.description)}">
+                        A detailed guide for this component is being prepared.
+                    </p>
+                </div>
             </article>
         </div>
     </section>
 
-    <section class="section"
-             aria-labelledby="observe-title">
-
+    <section class="section" aria-labelledby="observe-title">
         <div class="wrap">
             <div class="section-head">
                 <div>
-                    <p class="eyebrow">
-                        Explore with intention
-                    </p>
-
+                    <p class="eyebrow">Explore with intention</p>
                     <h2 id="observe-title">
                         Notice the details.<br>
                         <em>Consider the whole.</em>
                     </h2>
                 </div>
-
                 <p>
                     Use these prompts as you explore the
                     component information and the kit.
@@ -254,12 +1215,8 @@
 
             <div class="grid">
                 <article class="glass card">
-                    <span class="card-number">
-                        01 / FORM
-                    </span>
-
+                    <span class="card-number">01 / FORM</span>
                     <h3>What do you notice?</h3>
-
                     <p>
                         Look at the component’s outline,
                         proportions, and visible details.
@@ -268,26 +1225,17 @@
                 </article>
 
                 <article class="glass card">
-                    <span class="card-number">
-                        02 / CONNECTION
-                    </span>
-
+                    <span class="card-number">02 / CONNECTION</span>
                     <h3>Where does it belong?</h3>
-
                     <p>
-                        Consider its position within the
-                        complete keris and its relationship
-                        to the surrounding components.
+                        Consider its position within the complete keris
+                        and its relationship to the surrounding components.
                     </p>
                 </article>
 
                 <article class="glass card">
-                    <span class="card-number">
-                        03 / CURIOSITY
-                    </span>
-
+                    <span class="card-number">03 / CURIOSITY</span>
                     <h3>What would you ask?</h3>
-
                     <p>
                         Turn your observations into questions.
                         Read further or ask KerisBot, then
@@ -298,21 +1246,15 @@
         </div>
     </section>
 
-    <section class="section"
-             aria-labelledby="continue-title">
-
+    <section class="section" aria-labelledby="continue-title">
         <div class="wrap">
             <div class="glass band">
                 <div>
-                    <p class="eyebrow">
-                        Continue exploring
-                    </p>
-
+                    <p class="eyebrow">Continue exploring</p>
                     <h2 id="continue-title">
                         One part of<br>
                         <em>a larger story.</em>
                     </h2>
-
                     <p>
                         Return to the collection to discover
                         the other components presented in KerisKit.
@@ -335,13 +1277,9 @@
         <div class="footer-top">
             <div>
                 <a class="component-footer-brand"
-                   href="/"
-                   th:href="@{/}"
+                   href="/" th:href="@{/}"
                    aria-label="RYCIKĀN home">
-
-                    <span class="wordmark">
-                        RYCIKĀN
-                    </span>
+                    <span class="wordmark">RYCIKĀN</span>
                 </a>
 
                 <p class="component-footer-tagline">
@@ -349,23 +1287,14 @@
                 </p>
             </div>
 
-            <nav class="footer-links"
-                 aria-label="Footer navigation">
-
-                <a href="/" th:href="@{/}">
-                    Home
-                </a>
-
-                <a href="/explore.html"
-                   th:href="@{/explore.html}">
+            <nav class="footer-links" aria-label="Footer navigation">
+                <a href="/" th:href="@{/}">Home</a>
+                <a href="/explore.html" th:href="@{/explore.html}">
                     Explore KerisKit
                 </a>
-
-                <a href="/about.html"
-                   th:href="@{/about.html}">
+                <a href="/about.html" th:href="@{/about.html}">
                     About Us
                 </a>
-
                 <a href="/about.html#get-in-touch"
                    th:href="@{/about.html} + '#get-in-touch'">
                     Get in Touch
@@ -375,10 +1304,7 @@
 
         <div class="footer-meta">
             <p>© RYCIKĀN. All rights reserved.</p>
-
-            <p>
-                KerisKit · Explore · Assemble · Discover
-            </p>
+            <p>KerisKit · Explore · Assemble · Discover</p>
         </div>
     </div>
 </footer>
@@ -391,10 +1317,7 @@
         aria-expanded="false"
         aria-controls="chat-window">
 
-    <svg class="icon"
-         viewBox="0 0 24 24"
-         aria-hidden="true">
-
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8
                  8.5 8.5 0 0 1-7.6 4.7
                  8.4 8.4 0 0 1-3.8-.9L3 21
@@ -416,27 +1339,18 @@
     <div class="chat-head">
         <span class="avatar" aria-hidden="true">
             <svg class="icon" viewBox="0 0 24 24">
-                <rect x="4"
-                      y="6"
-                      width="16"
-                      height="14"
-                      rx="4"></rect>
-
+                <rect x="4" y="6" width="16" height="14" rx="4"></rect>
                 <path d="M12 3v3M8 11h.01M16 11h.01M8 16h8"></path>
             </svg>
         </span>
 
         <div>
             <h2 id="chat-title">KerisBot</h2>
-
             <p class="chat-status" role="status">
                 <span class="dot"
                       id="chat-status-dot"
                       aria-hidden="true"></span>
-
-                <span id="chat-status">
-                    Ready for your question
-                </span>
+                <span id="chat-status">Ready for your question</span>
             </p>
         </div>
 
@@ -444,11 +1358,7 @@
                 id="chat-close"
                 type="button"
                 aria-label="Close KerisBot">
-
-            <svg class="icon"
-                 viewBox="0 0 24 24"
-                 aria-hidden="true">
-
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m6 6 12 12M18 6 6 18"></path>
             </svg>
         </button>
@@ -461,25 +1371,20 @@
          aria-live="polite"
          aria-relevant="additions"
          aria-busy="false">
-
         <div class="message">
             Hello! I’m KerisBot. What would you like to know about this keris component?
         </div>
     </div>
 
-    <div class="quick"
-         aria-label="Suggested questions">
-
+    <div class="quick" aria-label="Suggested questions">
         <button type="button"
                 data-question="What is the hulu of a keris?">
             What is the Hulu?
         </button>
-
         <button type="button"
                 data-question="What are the main components of a keris?">
             Keris components
         </button>
-
         <button type="button"
                 data-question="What is the sampir of a keris?">
             What is the Sampir?
@@ -510,11 +1415,7 @@
                     id="chat-send"
                     type="submit"
                     aria-label="Send question">
-
-                <svg class="icon"
-                     viewBox="0 0 24 24"
-                     aria-hidden="true">
-
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m22 2-7 20-4-9-9-4Z"></path>
                     <path d="M22 2 11 13"></path>
                 </svg>
@@ -527,5 +1428,221 @@
         </p>
     </form>
 </section>
+
+<script>
+    (() => {
+        "use strict";
+
+        document.querySelectorAll("[data-rotation-viewer]").forEach((viewer) => {
+            const stage = viewer.querySelector(".rotation-stage");
+            const canvas = viewer.querySelector(".rotation-canvas");
+            const angle = viewer.querySelector(".rotation-angle");
+            const previous = viewer.querySelector('[data-rotate="-1"]');
+            const next = viewer.querySelector('[data-rotate="1"]');
+            const status = viewer.querySelector(".rotation-status");
+
+            const name = viewer.dataset.name || "Component";
+            const imageUrl = viewer.dataset.image;
+            const crop = Number(viewer.dataset.crop) || 1;
+            const isSampirViewer = name.trim().toLowerCase() === "sampir";
+
+            const sampirReferenceSize = [1774, 887];
+            const sampirFrames = [
+                [20, 60, 485, 335],
+                [550, 55, 430, 340],
+                [1110, 60, 100, 335],
+                [1350, 60, 410, 335],
+                [20, 515, 485, 325],
+                [550, 515, 420, 325],
+                [1110, 515, 100, 325],
+                [1350, 515, 410, 325]
+            ];
+
+            const context = canvas.getContext("2d");
+
+            if (!context || !imageUrl) {
+                status.textContent = "Viewer unavailable.";
+                return;
+            }
+
+            const image = new Image();
+            const frameCount = 8;
+            const columns = 4;
+            const rows = 2;
+
+            let frame = 0;
+            let ready = false;
+            let pointerId = null;
+            let previousX = 0;
+            let dragDistance = 0;
+
+            function drawFrame() {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (isSampirViewer) {
+                    const [x, y, width, height] = sampirFrames[frame];
+                    const scaleX = image.naturalWidth / sampirReferenceSize[0];
+                    const scaleY = image.naturalHeight / sampirReferenceSize[1];
+
+                    const fit = Math.min(
+                        canvas.width / 525,
+                        canvas.height / 390
+                    );
+
+                    const drawWidth = width * fit;
+                    const drawHeight = height * fit;
+
+                    context.drawImage(
+                        image,
+                        x * scaleX,
+                        y * scaleY,
+                        width * scaleX,
+                        height * scaleY,
+                        (canvas.width - drawWidth) / 2,
+                        (canvas.height - drawHeight) / 2,
+                        drawWidth,
+                        drawHeight
+                    );
+                } else {
+                    const cellWidth = image.naturalWidth / columns;
+                    const cellHeight = image.naturalHeight / rows;
+                    const column = frame % columns;
+                    const row = Math.floor(frame / columns);
+
+                    context.drawImage(
+                        image,
+                        column * cellWidth,
+                        row * cellHeight,
+                        cellWidth,
+                        cellHeight * crop,
+                        0,
+                        0,
+                        canvas.width,
+                        canvas.height
+                    );
+                }
+
+                const degrees = frame * 45;
+                angle.textContent = degrees + "°";
+
+                canvas.setAttribute(
+                    "aria-label",
+                    name + " viewed at " + degrees + " degrees"
+                );
+            }
+
+            function rotate(direction) {
+                if (!ready) return;
+
+                frame = (
+                    (frame + direction) % frameCount + frameCount
+                ) % frameCount;
+
+                drawFrame();
+            }
+
+            function finishDrag(event) {
+                if (event.pointerId !== pointerId) return;
+
+                const activePointer = pointerId;
+                pointerId = null;
+                dragDistance = 0;
+                stage.classList.remove("is-dragging");
+
+                if (stage.hasPointerCapture(activePointer)) {
+                    stage.releasePointerCapture(activePointer);
+                }
+            }
+
+            previous.addEventListener("click", () => rotate(-1));
+            next.addEventListener("click", () => rotate(1));
+
+            stage.addEventListener("keydown", (event) => {
+                if (!ready) return;
+
+                if (event.key === "ArrowLeft") {
+                    event.preventDefault();
+                    rotate(-1);
+                } else if (event.key === "ArrowRight") {
+                    event.preventDefault();
+                    rotate(1);
+                } else if (event.key === "Home") {
+                    event.preventDefault();
+                    frame = 0;
+                    drawFrame();
+                }
+            });
+
+            stage.addEventListener("pointerdown", (event) => {
+                if (!ready || pointerId !== null || !event.isPrimary) {
+                    return;
+                }
+
+                if (event.pointerType === "mouse" && event.button !== 0) {
+                    return;
+                }
+
+                pointerId = event.pointerId;
+                previousX = event.clientX;
+                dragDistance = 0;
+
+                stage.setPointerCapture(pointerId);
+                stage.classList.add("is-dragging");
+
+                if (event.pointerType === "mouse") {
+                    stage.focus({ preventScroll: true });
+                }
+            });
+
+            stage.addEventListener("pointermove", (event) => {
+                if (event.pointerId !== pointerId) return;
+
+                dragDistance += event.clientX - previousX;
+                previousX = event.clientX;
+
+                const step = 36;
+                const steps = Math.trunc(dragDistance / step);
+
+                if (steps !== 0) {
+                    dragDistance -= steps * step;
+                    rotate(steps);
+                }
+            });
+
+            stage.addEventListener("pointerup", finishDrag);
+            stage.addEventListener("pointercancel", finishDrag);
+            stage.addEventListener("lostpointercapture", finishDrag);
+
+            image.onload = () => {
+                if (isSampirViewer) {
+                    canvas.width = 525;
+                    canvas.height = 390;
+                } else {
+                    canvas.width = Math.round(image.naturalWidth / columns);
+                    canvas.height = Math.round(
+                        (image.naturalHeight / rows) * crop
+                    );
+                }
+
+                ready = true;
+                previous.disabled = false;
+                next.disabled = false;
+
+                status.textContent =
+                    "Drag sideways to rotate · Use arrows or swipe";
+
+                drawFrame();
+            };
+
+            image.onerror = () => {
+                status.textContent =
+                    "Unable to load " + name +
+                    " views. Refresh to try again.";
+            };
+
+            image.src = imageUrl;
+        });
+    })();
+</script>
 </body>
 </html>

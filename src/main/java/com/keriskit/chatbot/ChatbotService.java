@@ -23,13 +23,24 @@ public class ChatbotService {
     private static final Pattern SOURCE_LABEL_PATTERN =
             Pattern.compile("\\[(S\\d+)\\]");
 
-    private static final Pattern FOLLOW_UP_PATTERN = Pattern.compile(
-            "\\b(it|its|they|them|their|this|that|these|those)\\b"
-                    + "|^(and\\b|also\\b|what about\\b|how about\\b"
-                    + "|tell me more\\b|explain more\\b"
-                    + "|why\\b|how so\\b)",
-            Pattern.CASE_INSENSITIVE
-    );
+    private static final Pattern LIST_ITEM_PATTERN =
+            Pattern.compile("^\\s*(?:\\d+[.)]|[-*•])\\s+.*");
+
+    private static final Pattern SOURCE_NOTE_PATTERN =
+            Pattern.compile(
+                    "^\\h*(?:note\\h*:\\h*)?"
+                            + "(?:the\\h+)?source\\h+labels?\\b.*$",
+                    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
+            );
+
+    private static final Pattern FOLLOW_UP_PATTERN =
+            Pattern.compile(
+                    "\\b(it|its|they|them|their|this|that|these|those)\\b"
+                            + "|^(and\\b|also\\b|what about\\b|how about\\b"
+                            + "|tell me more\\b|explain more\\b"
+                            + "|why\\b|how so\\b)",
+                    Pattern.CASE_INSENSITIVE
+            );
 
     private final KnowledgeSearchService searchService;
     private final OllamaService ollamaService;
@@ -42,7 +53,6 @@ public class ChatbotService {
         this.ollamaService = ollamaService;
     }
 
-    // Keeps existing controller calls working.
     public ChatResponse chat(String question) {
         return chat(question, List.of());
     }
@@ -50,6 +60,12 @@ public class ChatbotService {
     public ChatResponse chat(
             String question,
             List<ChatbotController.ChatMessage> history) {
+
+        if (question == null || question.isBlank()) {
+            return insufficientInformation();
+        }
+
+        question = question.strip();
 
         List<ChatbotController.ChatMessage> recentHistory =
                 prepareHistory(history);
@@ -61,25 +77,28 @@ public class ChatbotService {
                 searchService.search(searchQuestion);
 
         if (chunks.isEmpty()) {
-            return insufficientInformation();
+            return rejectAnswer("No matching knowledge chunks.");
         }
 
-        StringBuilder context = new StringBuilder();
+        System.out.println(
+                "KERISBOT CHUNKS: "
+                        + chunks.stream()
+                        .map(KnowledgeChunk::id)
+                        .toList()
+        );
 
-        List<SourceReference> availableSources =
-                new ArrayList<>();
+        StringBuilder context = new StringBuilder();
+        List<SourceReference> availableSources = new ArrayList<>();
 
         for (int i = 0; i < chunks.size(); i++) {
             KnowledgeChunk chunk = chunks.get(i);
             String label = "S" + (i + 1);
 
+            // Page numbers and titles remain in source metadata.
+            // The model receives only the label and source text.
             context.append("[")
                     .append(label)
                     .append("]\n")
-                    .append("Source: Keris Melayu Semenanjung\n")
-                    .append("PDF page: ")
-                    .append(chunk.pdfPage())
-                    .append("\n")
                     .append(chunk.text())
                     .append("\n\n");
 
@@ -100,40 +119,34 @@ public class ChatbotService {
                 context.toString()
         );
 
-// Temporary diagnostics in the IntelliJ console.
-        System.out.println(
-                "KERISBOT CHUNKS: "
-                        + chunks.stream()
-                        .map(KnowledgeChunk::id)
-                        .toList()
-        );
-
-        System.out.println(
-                "KERISBOT RAW ANSWER: " + answer
-        );
+        System.out.println("KERISBOT RAW ANSWER: " + answer);
 
         if (answer == null || answer.isBlank()) {
-            return insufficientInformation();
+            return rejectAnswer("The generated answer was empty.");
         }
 
         answer = answer.strip();
 
-        if (containsMessage(answer, OUT_OF_SCOPE_MESSAGE)) {
+        // Remove this generic closing sentence.
+        // Component descriptions still require source citations.
+        answer = answer.replaceAll(
+                "(?im)^\\h*These parts work together to form "
+                        + "the external structure of the keris\\.\\h*$",
+                ""
+        ).strip();
+
+        if (answer.equalsIgnoreCase(OUT_OF_SCOPE_MESSAGE)) {
             return new ChatResponse(
                     OUT_OF_SCOPE_MESSAGE,
                     List.of()
             );
         }
 
-        if (containsMessage(
-                answer,
+        if (answer.equalsIgnoreCase(
                 INSUFFICIENT_INFORMATION_MESSAGE)) {
 
             return insufficientInformation();
         }
-
-        Set<String> citedLabels =
-                extractSourceLabels(answer);
 
         Set<String> availableLabels = new HashSet<>();
 
@@ -141,11 +154,28 @@ public class ChatbotService {
             availableLabels.add(source.label());
         }
 
-        // Only accept citation labels from the current search.
-        if (citedLabels.isEmpty()
-                || !availableLabels.containsAll(citedLabels)) {
+        Set<String> citedLabels = extractSourceLabels(answer);
 
-            return insufficientInformation();
+        if (citedLabels.isEmpty()) {
+            return rejectAnswer("No source citations were supplied.");
+        }
+
+        if (!availableLabels.containsAll(citedLabels)) {
+            return rejectAnswer(
+                    "The answer used an unavailable source label."
+            );
+        }
+
+        if (SOURCE_NOTE_PATTERN.matcher(answer).find()) {
+            return rejectAnswer(
+                    "The answer included a source-label note."
+            );
+        }
+
+        if (!hasCitationsForContentBlocks(answer)) {
+            return rejectAnswer(
+                    "A paragraph or list item had no source citation."
+            );
         }
 
         List<SourceReference> citedSources =
@@ -155,6 +185,98 @@ public class ChatbotService {
                         .toList();
 
         return new ChatResponse(answer, citedSources);
+    }
+
+    private boolean hasCitationsForContentBlocks(String answer) {
+        List<String> blocks = splitContentBlocks(answer);
+        int citedBlocks = 0;
+
+        for (String block : blocks) {
+            String content = block.strip();
+
+            if (content.isBlank()) {
+                continue;
+            }
+
+            // Allow short introductory headings without citations.
+            // This is a formatting heuristic, not a factual check.
+            if (isHeading(content)) {
+                continue;
+            }
+
+            Set<String> labels = extractSourceLabels(content);
+
+            if (labels.isEmpty()) {
+                return false;
+            }
+
+            // A block containing only citation labels is not an answer.
+            String textWithoutLabels = SOURCE_LABEL_PATTERN
+                    .matcher(content)
+                    .replaceAll("");
+
+            boolean hasText = textWithoutLabels.codePoints()
+                    .anyMatch(Character::isLetter);
+
+            if (!hasText) {
+                return false;
+            }
+
+            citedBlocks++;
+        }
+
+        return citedBlocks > 0;
+    }
+
+    private List<String> splitContentBlocks(String answer) {
+        List<String> blocks = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+
+        for (String line : answer.lines().toList()) {
+            String trimmed = line.strip();
+
+            if (trimmed.isBlank()) {
+                flushBlock(current, blocks);
+                continue;
+            }
+
+            if (LIST_ITEM_PATTERN.matcher(trimmed).matches()) {
+                flushBlock(current, blocks);
+            }
+
+            if (!current.isEmpty()) {
+                current.append("\n");
+            }
+
+            current.append(trimmed);
+        }
+
+        flushBlock(current, blocks);
+
+        return blocks;
+    }
+
+    private void flushBlock(
+            StringBuilder current,
+            List<String> blocks) {
+
+        if (!current.isEmpty()) {
+            blocks.add(current.toString().strip());
+            current.setLength(0);
+        }
+    }
+
+    private boolean isHeading(String text) {
+        if (text.contains("\n")
+                || text.length() > 100
+                || !text.endsWith(":")
+                || LIST_ITEM_PATTERN.matcher(text).matches()
+                || SOURCE_LABEL_PATTERN.matcher(text).find()) {
+
+            return false;
+        }
+
+        return text.split("\\s+").length <= 18;
     }
 
     private List<ChatbotController.ChatMessage> prepareHistory(
@@ -173,8 +295,7 @@ public class ChatbotService {
                 new ArrayList<>();
 
         for (int i = start; i < history.size(); i++) {
-            ChatbotController.ChatMessage message =
-                    history.get(i);
+            ChatbotController.ChatMessage message = history.get(i);
 
             if (message == null
                     || message.content() == null
@@ -191,22 +312,19 @@ public class ChatbotService {
                 continue;
             }
 
-            // Old citation labels must not be reused as current sources.
             String content = SOURCE_LABEL_PATTERN
                     .matcher(message.content())
                     .replaceAll("")
                     .strip();
 
-            if (content.isBlank()) {
-                continue;
+            if (!content.isBlank()) {
+                recentHistory.add(
+                        new ChatbotController.ChatMessage(
+                                message.role(),
+                                content
+                        )
+                );
             }
-
-            recentHistory.add(
-                    new ChatbotController.ChatMessage(
-                            message.role(),
-                            content
-                    )
-            );
         }
 
         return List.copyOf(recentHistory);
@@ -216,19 +334,14 @@ public class ChatbotService {
             String question,
             List<ChatbotController.ChatMessage> history) {
 
-        if (history.isEmpty()
-                || !isFollowUp(question)) {
-
+        if (history.isEmpty() || !isFollowUp(question)) {
             return question;
         }
 
         String previousQuestion = null;
 
-        // Prefer the most recent self-contained user question.
-        // Assistant replies are never used as source evidence.
         for (int i = history.size() - 1; i >= 0; i--) {
-            ChatbotController.ChatMessage message =
-                    history.get(i);
+            ChatbotController.ChatMessage message = history.get(i);
 
             if (!"user".equals(message.role())) {
                 continue;
@@ -244,11 +357,9 @@ public class ChatbotService {
             }
         }
 
-        if (previousQuestion == null) {
-            return question;
-        }
-
-        return question + "\n" + previousQuestion;
+        return previousQuestion == null
+                ? question
+                : question + "\n" + previousQuestion;
     }
 
     private boolean isFollowUp(String question) {
@@ -261,7 +372,7 @@ public class ChatbotService {
             String question,
             List<ChatbotController.ChatMessage> history) {
 
-        if (history.isEmpty()) {
+        if (history.isEmpty() || !isFollowUp(question)) {
             return question;
         }
 
@@ -269,10 +380,9 @@ public class ChatbotService {
 
         conversation.append("""
                 The following conversation is background data.
-                Use it to understand references in the current question,
-                such as "it", "that part", or "tell me more".
+                Use it only to understand references in the current question.
                 Previous replies are not verified source evidence.
-                Support factual claims only with the current source excerpts.
+                Support factual claims only with current source excerpts.
                 Answer only the current question in natural English.
                 If the reference is ambiguous, do not guess.
 
@@ -296,29 +406,20 @@ public class ChatbotService {
         return conversation.toString();
     }
 
-    private boolean containsMessage(
-            String answer,
-            String message) {
-
-        return Pattern.compile(
-                        Pattern.quote(message),
-                        Pattern.CASE_INSENSITIVE
-                )
-                .matcher(answer)
-                .find();
-    }
-
     private Set<String> extractSourceLabels(String answer) {
         Set<String> labels = new HashSet<>();
-
-        Matcher matcher =
-                SOURCE_LABEL_PATTERN.matcher(answer);
+        Matcher matcher = SOURCE_LABEL_PATTERN.matcher(answer);
 
         while (matcher.find()) {
             labels.add(matcher.group(1));
         }
 
         return labels;
+    }
+
+    private ChatResponse rejectAnswer(String reason) {
+        System.out.println("KERISBOT VALIDATION: REJECTED - " + reason);
+        return insufficientInformation();
     }
 
     private ChatResponse insufficientInformation() {

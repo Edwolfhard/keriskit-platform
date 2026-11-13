@@ -25,8 +25,6 @@ public class KnowledgeSearchService {
             "these", "those", "used", "use", "using"
     );
 
-    // These groups help search across English and Malay terms.
-    // They are search vocabulary, not factual answers.
     private static final List<Set<String>> COMPONENT_TERMS =
             List.of(
                     Set.of(
@@ -34,7 +32,8 @@ public class KnowledgeSearchService {
                             "handle", "handles"
                     ),
                     Set.of(
-                            "pendokok", "collar", "collars"
+                            "pendokok", "pendongkok",
+                            "collar", "collars"
                     ),
                     Set.of("sampir"),
                     Set.of(
@@ -45,6 +44,13 @@ public class KnowledgeSearchService {
                             "bilah", "blade", "blades"
                     )
             );
+
+    private static final Set<String> OVERVIEW_TERMS = Set.of(
+            "component", "components",
+            "part", "parts",
+            "anatomy", "structure",
+            "komponen", "bahagian", "struktur"
+    );
 
     private static final Set<String> MATERIAL_QUESTION_TERMS =
             Set.of(
@@ -85,13 +91,18 @@ public class KnowledgeSearchService {
 
         Set<String> questionWords = tokenize(question);
 
+        Set<String> componentKeywords =
+                findComponentKeywords(questionWords);
+
         boolean materialQuestion = hasAny(
                 questionWords,
                 MATERIAL_QUESTION_TERMS
         );
 
-        Set<String> componentKeywords =
-                findComponentKeywords(questionWords);
+        boolean overviewQuestion =
+                componentKeywords.isEmpty()
+                        && hasAny(questionWords, OVERVIEW_TERMS)
+                        && !materialQuestion;
 
         Set<String> keywords = new HashSet<>(questionWords);
         keywords.removeAll(STOP_WORDS);
@@ -109,7 +120,8 @@ public class KnowledgeSearchService {
                                 chunk.text(),
                                 keywords,
                                 componentKeywords,
-                                materialQuestion
+                                materialQuestion,
+                                overviewQuestion
                         )
                 ))
                 .filter(result -> result.score() > 0)
@@ -147,6 +159,13 @@ public class KnowledgeSearchService {
             result.add("kasut");
         }
 
+        if (questionWords.contains("batang")
+                && questionWords.contains("serunai")) {
+
+            result.add("batang");
+            result.add("serunai");
+        }
+
         return result;
     }
 
@@ -154,7 +173,8 @@ public class KnowledgeSearchService {
             String text,
             Set<String> keywords,
             Set<String> componentKeywords,
-            boolean materialQuestion) {
+            boolean materialQuestion,
+            boolean overviewQuestion) {
 
         if (text == null || text.isBlank()) {
             return 0;
@@ -162,10 +182,13 @@ public class KnowledgeSearchService {
 
         Set<String> words = tokenize(text);
 
+        if (overviewQuestion) {
+            return calculateOverviewScore(text, words);
+        }
+
         boolean matchesComponent =
                 hasAny(words, componentKeywords);
 
-        // Avoid selecting material passages about unrelated parts.
         if (!componentKeywords.isEmpty()
                 && !matchesComponent) {
 
@@ -185,14 +208,12 @@ public class KnowledgeSearchService {
         }
 
         if (materialQuestion) {
-            // Rank passages discussing materials above definitions.
             long materialMatches = MATERIAL_SOURCE_TERMS.stream()
                     .filter(words::contains)
                     .count();
 
             score += (int) Math.min(materialMatches, 6) * 12;
         } else {
-            // Definition bonuses apply only to other question types.
             String normalizedText =
                     text.toLowerCase(Locale.ROOT);
 
@@ -221,6 +242,54 @@ public class KnowledgeSearchService {
                     score += 20;
                 }
             }
+        }
+
+        return score;
+    }
+
+    private int calculateOverviewScore(
+            String text,
+            Set<String> words) {
+
+        int componentCoverage = 0;
+
+        for (Set<String> group : COMPONENT_TERMS) {
+            if (hasAny(words, group)) {
+                componentCoverage++;
+            }
+        }
+
+        if (words.contains("kasut")
+                || words.contains("buntut")) {
+
+            componentCoverage++;
+        }
+
+        if (words.contains("batang")
+                && words.contains("serunai")) {
+
+            componentCoverage++;
+        }
+
+        if (componentCoverage == 0) {
+            return 0;
+        }
+
+        // Prefer passages covering several parts together.
+        int score = componentCoverage * 100;
+
+        String normalizedText = text
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("\\s+", " ");
+
+        if (normalizedText.contains("rupa bentuk asas")) {
+            score += 200;
+        }
+
+        if (normalizedText.contains("terdiri daripada")
+                || normalizedText.contains("consists of")) {
+
+            score += 100;
         }
 
         return score;
