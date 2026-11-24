@@ -31,7 +31,7 @@ KerisBot combines keyword-based retrieval from a structured knowledge collection
 - **Frontend:** HTML, CSS, JavaScript, Thymeleaf
 - **Database:** PostgreSQL 17
 - **Schema migrations:** Flyway
-- **Local AI:** Ollama
+- **Local AI:** Grok
 - **Build:** Maven
 - **Database container:** Docker Compose
 
