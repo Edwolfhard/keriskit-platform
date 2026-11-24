@@ -145,9 +145,7 @@ The current repository does not include a usable Maven Wrapper.
 
 ### Open the Application
 
-- Home: http://127.0.0.1:8080/
-- Component collection: http://127.0.0.1:8080/explore.html
-- Hulu detail: http://127.0.0.1:8080/components/hulu
+https://keriskit-platform.onrender.com/
 
 ## Project Structure
 
